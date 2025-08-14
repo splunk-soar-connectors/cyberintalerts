@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 # API Endpoints
 ALERTS_ENDPOINT = "/alert/api/v1/alerts"
 ALERTS_STATUS_ENDPOINT = "/alert/api/v1/alerts/status"

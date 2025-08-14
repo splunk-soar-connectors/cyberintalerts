@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>Enriched Alerts</title>
-<style>
+  <head>
+    <title>Enriched Alerts</title>
+    <style>
     body {
         font-family: Arial, sans-serif;
     }
@@ -18,58 +18,56 @@
     th {
         background-color: #f2f2f2;
     }
-</style>
-</head>
-<body>
-
-<h1>Enriched Alerts</h1>
-
-{% if alerts %}
-    <table>
+    </style>
+  </head>
+  <body>
+    <h1>Enriched Alerts</h1>
+    {% if alerts %}
+      <table>
         <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Severity</th>
-            <th>Tags</th>
-            <th>Indicators</th>
-            <th>Update Status</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Severity</th>
+          <th>Tags</th>
+          <th>Indicators</th>
+          <th>Update Status</th>
         </tr>
         {% for alert in alerts %}
-        <tr>
+          <tr>
             <td>{{ alert.title }}</td>
             <td>{{ alert.description }}</td>
             <td>{{ alert.severity }}</td>
             <td>{{ alert.tags|join:", " }}</td>
             <td>
-                <ul>
+              <ul>
                 {% for indicator in alert.indicators %}
-                    <li>{{ indicator.value }} ({{ indicator.type }})
-                        <button onclick="enrich('{{ indicator.type }}', '{{ indicator.value }}')">Enrich</button>
-                    </li>
+                  <li>
+                    {{ indicator.value }} ({{ indicator.type }})
+                    <button onclick="enrich('{{ indicator.type }}', '{{ indicator.value }}')">Enrich</button>
+                  </li>
                 {% endfor %}
-                </ul>
+              </ul>
             </td>
             <td>
-                <form action="/update_alert_status/" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="Alert_Ref_IDs" value="{{ alert.ref_id }}">
-                    <input type="text" name="Closure_Reason" placeholder="Closure Reason">
-                    <select name="Status">
-                        <option value="open">Open</option>
-                        <option value="acknowledged">Acknowledged</option>
-                        <option value="closed">Closed</option>
-                    </select>
-                    <input type="submit" value="Update">
-                </form>
+              <form action="/update_alert_status/" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="Alert_Ref_IDs" value="{{ alert.ref_id }}">
+                <input type="text" name="Closure_Reason" placeholder="Closure Reason">
+                <select name="Status">
+                  <option value="open">Open</option>
+                  <option value="acknowledged">Acknowledged</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <input type="submit" value="Update">
+              </form>
             </td>
-        </tr>
+          </tr>
         {% endfor %}
-    </table>
-{% else %}
-    <p>No alerts found.</p>
-{% endif %}
-
-<script>
+      </table>
+    {% else %}
+      <p>No alerts found.</p>
+    {% endif %}
+    <script>
 function enrich(type, value) {
     fetch(`/enrich_indicator/?type=${type}&value=${value}`)
         .then(response => response.json())
@@ -77,7 +75,6 @@ function enrich(type, value) {
             alert(JSON.stringify(data, null, 2));
         });
 }
-</script>
-
-</body>
+    </script>
+  </body>
 </html>

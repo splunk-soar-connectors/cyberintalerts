@@ -1,6 +1,7 @@
+import phantom.app as phantom
 from django.http import HttpResponse
 from django.template import loader
-import phantom.app as phantom
+
 from cyberintalerts_connector import CyberintAlertsConnector
 from cyberintalerts_consts import ALERTS_ENDPOINT
 

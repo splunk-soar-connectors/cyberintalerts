@@ -1,24 +1,25 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # -----------------------------------------
 # Phantom App Connector python file
 # -----------------------------------------
 
+import json
+
 import phantom.app as phantom
+import requests
+from bs4 import BeautifulSoup
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
+
 from cyberintalerts_consts import (
-    TakedownReason,
-    Status,
-    ClosureReason,
     ALERTS_ENDPOINT,
     ALERTS_STATUS_ENDPOINT,
-    TAKEDOWN_SUBMIT_ENDPOINT,
     TAKEDOWN_REQUEST_ENDPOINT,
+    TAKEDOWN_SUBMIT_ENDPOINT,
+    ClosureReason,
+    Status,
+    TakedownReason,
 )
-import requests
-import json
-from bs4 import BeautifulSoup
 
 
 class RetVal(tuple):
@@ -40,7 +41,7 @@ def map_severity(severity_str):
 
 class CyberintAlertsConnector(BaseConnector):
     def __init__(self):
-        super(CyberintAlertsConnector, self).__init__()
+        super().__init__()
         self._state = None
         self._base_url = None
         self._access_token = None
@@ -366,8 +367,8 @@ class CyberintAlertsConnector(BaseConnector):
 
 
 if __name__ == "__main__":
-    import sys
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser()
     parser.add_argument("input_test_json", help="Input Test JSON file")
