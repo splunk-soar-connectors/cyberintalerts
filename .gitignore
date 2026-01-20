@@ -4,6 +4,7 @@
 .vscode/
 .idea/
 .DS_Store
+.claude
 
 # Dependencies
 node_modules/

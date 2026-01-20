@@ -51,12 +51,29 @@ Read only: **True**
 
 #### Action Parameters
 
-No parameters are required for this action
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**Alert_Types** | optional | Comma-separated list of alert types to fetch (leave empty for all types) | string | |
+**Severities** | optional | Comma-separated severity levels to filter (leave empty for all severities) | string | |
+**Statuses** | optional | Comma-separated statuses to filter (leave empty for all statuses) | string | |
+**Include_CSV_Attachments** | optional | Include CSV attachments as JSON content in the response | boolean | |
+**Page_Size** | optional | Number of alerts to fetch per page (10-100, default: 50) | numeric | |
+
+**Available Alert Types:** refund_fraud, carding, coupon_fraud, money_laundering, victim_report, malicious_insider, extortion, phishing_email, phishing_kit, phishing_website, lookalike_domain, phishing_target_list, malicious_file, reconnaissance, automated_attack_tools, business_logic_bypass, target_list, official_social_media_profile, impersonation, intellectual_property_infringement, unauthorized_trading, negative_sentiment, fake_job_posting, defacement, compromised_pii, internal_information_disclosure, compromised_payment_cards, compromised_employee_credentials, compromised_customer_credentials, compromised_access_token, ransomware, exposed_web_interfaces, hijackable_subdomains, website_vulnerabilities, vulnerabilities, exposed_cloud_storage, exploitable_ports, mail_servers_in_blacklist, server_connected_to_botnet, email_security_issues, certificate_authority_issues, user_defined_saved_query, other, ssl_tls, web_app_security
+
+**Available Severities:** low, medium, high, very_high
+
+**Available Statuses:** open, acknowledged, closed
 
 #### Action Output
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
+action_result.parameter.Alert_Types | string | | |
+action_result.parameter.Severities | string | | |
+action_result.parameter.Statuses | string | | |
+action_result.parameter.Include_CSV_Attachments | boolean | | |
+action_result.parameter.Page_Size | numeric | | |
 action_result.message | string | | |
 summary.total_objects | numeric | | |
 summary.total_objects_successful | numeric | | |
