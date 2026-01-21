@@ -1,7 +1,7 @@
 # Cyberint Alerts
 
 Publisher: Check Point Cyberint <br>
-Connector Version: 1.0.2 <br>
+Connector Version: 1.0.3 <br>
 Product Vendor: Check Point Cyberint <br>
 Product Name: Cyberint Alerts <br>
 Minimum Product Version: 6.4.0
@@ -57,13 +57,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **Severities** | optional | Comma-separated severity levels to filter (leave empty for all severities) | string | |
 **Statuses** | optional | Comma-separated statuses to filter (leave empty for all statuses) | string | |
 **Include_CSV_Attachments** | optional | Include CSV attachments as JSON content in the response | boolean | |
-**Page_Size** | optional | Number of alerts to fetch per page (10-100, default: 50) | numeric | |
-
-**Available Alert Types:** refund_fraud, carding, coupon_fraud, money_laundering, victim_report, malicious_insider, extortion, phishing_email, phishing_kit, phishing_website, lookalike_domain, phishing_target_list, malicious_file, reconnaissance, automated_attack_tools, business_logic_bypass, target_list, official_social_media_profile, impersonation, intellectual_property_infringement, unauthorized_trading, negative_sentiment, fake_job_posting, defacement, compromised_pii, internal_information_disclosure, compromised_payment_cards, compromised_employee_credentials, compromised_customer_credentials, compromised_access_token, ransomware, exposed_web_interfaces, hijackable_subdomains, website_vulnerabilities, vulnerabilities, exposed_cloud_storage, exploitable_ports, mail_servers_in_blacklist, server_connected_to_botnet, email_security_issues, certificate_authority_issues, user_defined_saved_query, other, ssl_tls, web_app_security
-
-**Available Severities:** low, medium, high, very_high
-
-**Available Statuses:** open, acknowledged, closed
+**Page_Size** | optional | Number of alerts to fetch per page (10-100) | numeric | |
 
 #### Action Output
 
@@ -185,7 +179,7 @@ ______________________________________________________________________
 
 Auto-generated Splunk SOAR Connector documentation.
 
-Copyright 2025 Splunk Inc.
+Copyright 2026 Splunk Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
