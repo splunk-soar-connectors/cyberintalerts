@@ -103,7 +103,7 @@ class CyberintAlertsConnector(BaseConnector):
             try:
                 soup = BeautifulSoup(r.text, "html.parser")
                 error_text = "\n".join([x.strip() for x in soup.text.split("\n") if x.strip()])
-            except:
+            except Exception:
                 error_text = "Cannot parse error details"
             message = f"Status Code: {r.status_code}. Data from server:\n{error_text}\n"
             return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
