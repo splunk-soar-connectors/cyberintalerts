@@ -1,4 +1,4 @@
-# Copyright (c) 2025-2026 Splunk Inc.
+# Copyright (c) 2026 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 # -----------------------------------------
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import phantom.app as phantom
 import requests
@@ -27,6 +28,13 @@ from phantom.base_connector import BaseConnector
 from cyberintalerts_consts import (
     ALERTS_ENDPOINT,
     ALERTS_STATUS_ENDPOINT,
+    CREDENTIALS_BY_DOMAIN_ENDPOINT,
+    CREDENTIALS_BY_EMAIL_ENDPOINT,
+    CVE_GET_BY_ID_ENDPOINT,
+    IOC_DOMAIN_ENDPOINT,
+    IOC_FILE_SHA256_ENDPOINT,
+    IOC_IPV4_ENDPOINT,
+    IOC_URL_ENDPOINT,
     TAKEDOWN_REQUEST_ENDPOINT,
     TAKEDOWN_SUBMIT_ENDPOINT,
     ClosureReason,
@@ -55,6 +63,13 @@ def map_severity(severity_str):
 class CyberintAlertsConnector(BaseConnector):
     def __init__(self):
         super().__init__()
+        self._max_fetch = None
+        self._include_csv = None
+        self._start_time = None
+        self._fetch_type = None
+        self._fetch_environment = None
+        self._fetch_status = None
+        self._fetch_severity = None
         self._state = None
         self._base_url = None
         self._access_token = None
@@ -78,7 +93,49 @@ class CyberintAlertsConnector(BaseConnector):
         self._base_url = config.get("base_url")
         self._access_token = config.get("access_token")
         self._customer_name = config.get("customer_name")
+        self._fetch_severity = config.get("fetch_severity")
+        self._fetch_status = config.get("fetch_status")
+        self._fetch_environment = config.get("fetch_environment")
+        self._fetch_type = config.get("fetch_type")
+        self._start_time = config.get("start_time", "Last 24 Hours")
+        self._max_fetch = config.get("max_fetch", 10)
+        self._include_csv = config.get("include_csv", False)
         return phantom.APP_SUCCESS
+
+    @staticmethod
+    def _parse_start_time(start_time):
+        deltas = {
+            "Last 1 Hour": timedelta(hours=1),
+            "Last 24 Hours": timedelta(hours=24),
+            "Last 7 Days": timedelta(days=7),
+            "Last 30 Days": timedelta(days=30),
+            "Last 90 Days": timedelta(days=90),
+        }
+        delta = deltas.get(start_time, timedelta(hours=24))
+        now = datetime.now(UTC)
+        return (now - delta).strftime("%Y-%m-%dT%H:%M:%SZ"), now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def _build_alerts_request_body(self):
+        body = {"page": 1}
+        filters = {}
+        if self._fetch_severity:
+            filters["severity"] = [s.strip() for s in self._fetch_severity.split(",") if s.strip()]
+        if self._fetch_status:
+            filters["status"] = [s.strip() for s in self._fetch_status.split(",") if s.strip()]
+        if self._fetch_environment:
+            filters["environments"] = [s.strip() for s in self._fetch_environment.split(",") if s.strip()]
+        if self._fetch_type:
+            filters["type"] = [s.strip() for s in self._fetch_type.split(",") if s.strip()]
+        if self._start_time:
+            date_from, date_to = self._parse_start_time(self._start_time)
+            filters["created_date"] = {"from": date_from, "to": date_to}
+        if filters:
+            body["filters"] = filters
+        if self._max_fetch:
+            body["size"] = int(self._max_fetch)
+        if self._include_csv:
+            body["include_csv_attachments_as_json_content"] = True
+        return body
 
     def _process_response(self, r, action_result):
         if hasattr(action_result, "add_debug_data"):
@@ -170,54 +227,10 @@ class CyberintAlertsConnector(BaseConnector):
                 alert["indicators"][idx] = response
         return phantom.APP_SUCCESS, alerts
 
-    def _build_alerts_filter(self, param):
-        """Build filters dictionary from action parameters."""
-        filters = {}
-
-        # Parse alert types (comma-separated or single value from dropdown)
-        alert_types = param.get("Alert_Types", "")
-        if alert_types:
-            types_list = [t.strip() for t in alert_types.split(",") if t.strip()]
-            if types_list:
-                filters["type"] = types_list
-
-        # Parse severities (comma-separated or single value from dropdown)
-        severities = param.get("Severities", "")
-        if severities:
-            sev_list = [s.strip() for s in severities.split(",") if s.strip()]
-            if sev_list:
-                filters["severity"] = sev_list
-
-        # Parse statuses (comma-separated or single value from dropdown)
-        statuses = param.get("Statuses", "")
-        if statuses:
-            status_list = [s.strip() for s in statuses.split(",") if s.strip()]
-            if status_list:
-                filters["status"] = status_list
-
-        return filters if filters else None
-
     def _handle_get_enriched_alerts(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-
-        # Build request body with filters
-        filters = self._build_alerts_filter(param)
-        include_csv = param.get("Include_CSV_Attachments", False)
-        page_size = param.get("Page_Size", 50)
-
-        # Validate page_size range
-        if page_size and (page_size < 10 or page_size > 100):
-            return action_result.set_status(phantom.APP_ERROR, "Page_Size must be between 10 and 100")
-
-        body = {
-            "size": page_size,
-            "include_csv_attachments_as_json_content": include_csv,
-        }
-        if filters:
-            body["filters"] = filters
-
-        self.debug_print(f"Fetching alerts from {ALERTS_ENDPOINT} with body: {body}")
-        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json=body)
+        self.debug_print(f"Fetching alerts from {ALERTS_ENDPOINT}")
+        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json=self._build_alerts_request_body())
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
@@ -308,7 +321,7 @@ class CyberintAlertsConnector(BaseConnector):
     def _handle_test_connectivity(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
         self.save_progress("Connecting to endpoint...")
-        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json={})
+        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json=self._build_alerts_request_body())
         if phantom.is_fail(ret_val):
             self.save_progress("Test Connectivity Failed.")
             return action_result.get_status()
@@ -320,7 +333,7 @@ class CyberintAlertsConnector(BaseConnector):
         self.save_progress("Starting alert ingestion...")
 
         self.debug_print("Fetching raw alerts...")
-        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json={})
+        ret_val, response = self._make_rest_call(ALERTS_ENDPOINT, action_result, method="post", json=self._build_alerts_request_body())
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
@@ -372,7 +385,7 @@ class CyberintAlertsConnector(BaseConnector):
             details_artifact = {
                 "name": "Alert Details",
                 "container_id": container_id,
-                "source_data_identifier": f"{alert.get('ref_id')}_details",
+                "source_data_identifier": f"{alert.get('ref_id')}",
                 "cef": alert_details,
             }
             self.save_artifact(details_artifact)
@@ -396,6 +409,73 @@ class CyberintAlertsConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
+    def _handle_get_file_reputation(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        sha256 = param["SHA256"]
+        ret_val, response = self._make_rest_call(IOC_FILE_SHA256_ENDPOINT, action_result, params={"value": sha256})
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_get_domain_reputation(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain = param["Domain"]
+        ret_val, response = self._make_rest_call(IOC_DOMAIN_ENDPOINT, action_result, params={"value": domain})
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_get_ip_reputation(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        ip = param["IP"]
+        ret_val, response = self._make_rest_call(IOC_IPV4_ENDPOINT, action_result, params={"value": ip})
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_get_url_reputation(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        url = param["URL"]
+        ret_val, response = self._make_rest_call(IOC_URL_ENDPOINT, action_result, params={"value": url})
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_get_cve_intelligence(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        cve_id = param["CVE_ID"]
+        endpoint = CVE_GET_BY_ID_ENDPOINT.format(cve_id=cve_id)
+        ret_val, response = self._make_rest_call(endpoint, action_result)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_lookup_credentials_by_domain(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        domain = param["Domain"]
+        body = {"domain": domain}
+        ret_val, response = self._make_rest_call(CREDENTIALS_BY_DOMAIN_ENDPOINT, action_result, method="post", json=body)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_lookup_credentials_by_email(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        emails = [e.strip() for e in param["Email"].split(",") if e.strip()]
+        mask_password = param.get("Mask_Password", True)
+        body = {"email": emails, "mask_password": mask_password}
+        ret_val, response = self._make_rest_call(CREDENTIALS_BY_EMAIL_ENDPOINT, action_result, method="post", json=body)
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
+        action_result.add_data(response.get("data", {}))
+        return action_result.set_status(phantom.APP_SUCCESS)
+
     def handle_action(self, param):
         if hasattr(self, "_get_requests_session"):
             self._requests_session = self._get_requests_session()
@@ -415,6 +495,20 @@ class CyberintAlertsConnector(BaseConnector):
             ret_val = self._handle_retrieve_takedowns(param)
         elif action_id == "on_poll":
             ret_val = self._handle_ingest_alerts(param)
+        elif action_id == "get_file_reputation":
+            ret_val = self._handle_get_file_reputation(param)
+        elif action_id == "get_domain_reputation":
+            ret_val = self._handle_get_domain_reputation(param)
+        elif action_id == "get_ip_reputation":
+            ret_val = self._handle_get_ip_reputation(param)
+        elif action_id == "get_url_reputation":
+            ret_val = self._handle_get_url_reputation(param)
+        elif action_id == "get_cve_intelligence":
+            ret_val = self._handle_get_cve_intelligence(param)
+        elif action_id == "lookup_credentials_by_domain":
+            ret_val = self._handle_lookup_credentials_by_domain(param)
+        elif action_id == "lookup_credentials_by_email":
+            ret_val = self._handle_lookup_credentials_by_email(param)
 
         return ret_val
 

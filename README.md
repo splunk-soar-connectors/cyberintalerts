@@ -1,12 +1,12 @@
 # Cyberint Alerts
 
-Publisher: Check Point Cyberint <br>
-Connector Version: 1.0.3 <br>
-Product Vendor: Check Point Cyberint <br>
+Publisher: Check Point <br>
+Connector Version: 1.0.4 <br>
+Product Vendor: Check Point <br>
 Product Name: Cyberint Alerts <br>
-Minimum Product Version: 6.4.0
+Minimum Product Version: 7.0.0
 
-Cyberint and Splunk SOAR integration is here to simplify and streamline alerts for Splunk SOAR, bring enriched threat intelligence from the Argos Edge™ Digital Risk Protection Platform into Splunk SOAR and automatically implement playbooks and incident processes.
+Check Point Exposure Management and Splunk SOAR integration is here to simplify and streamline alerts for Splunk SOAR, bring enriched threat intelligence from the Argos Edge™ Digital Risk Protection Platform into Splunk SOAR and automatically implement playbooks and incident processes.
 
 ### Configuration variables
 
@@ -14,9 +14,16 @@ This table lists the configuration variables required to operate Cyberint Alerts
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
-**base_url** | required | string | Base URL of the Cyberint API |
-**access_token** | required | password | API Access Token for authentication |
-**customer_name** | required | string | The name of the company |
+**base_url** | required | string | Cyberint API URL on which the services run (e.g. https://your-company.cyberint.io) |
+**access_token** | required | password | Cyberint API access token |
+**customer_name** | required | string | Company name associated with Cyberint instance |
+**fetch_severity** | optional | string | Comma-separated list of severities to fetch. Supported values: low, medium, high, very_high. If empty, all severity levels will be returned |
+**fetch_status** | optional | string | Comma-separated list of statuses to fetch. Supported values: open, acknowledged, closed. If empty, all statuses will be returned |
+**fetch_environment** | optional | string | Environments to fetch (comma separated). If empty, all available environments will be returned |
+**fetch_type** | optional | string | Comma-separated alert types to fetch. See API docs for supported types. If empty, all types will be returned |
+**start_time** | optional | string | Starting time frame for initial data retrieval. If not set, alerts from the last 24 hours will be fetched |
+**max_fetch** | optional | numeric | Max number of alerts per fetch. Default is 10, max is 100 |
+**include_csv** | optional | boolean | Include CSV attachments as JSON content in alert data |
 
 ### Supported Actions
 
@@ -25,7 +32,14 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [alerts - update alert status](#action-alerts---update-alert-status) - Update the status of one or more alerts <br>
 [alerts - submit takedown](#action-alerts---submit-takedown) - Submit a takedown request <br>
 [alerts - retrieve takedowns](#action-alerts---retrieve-takedowns) - Retrieve takedown requests <br>
-[on poll](#action-on-poll) - Ingest Cyberint alerts and create cases
+[on poll](#action-on-poll) - Ingest Cyberint alerts and create cases <br>
+[ioc - get file reputation](#action-ioc---get-file-reputation) - Get the reputation of a file by its SHA256 hash <br>
+[ioc - get domain reputation](#action-ioc---get-domain-reputation) - Get the reputation of a domain <br>
+[ioc - get ip reputation](#action-ioc---get-ip-reputation) - Get the reputation of an IPv4 address <br>
+[ioc - get url reputation](#action-ioc---get-url-reputation) - Get the reputation of a URL <br>
+[credentials - lookup by domain](#action-credentials---lookup-by-domain) - Look up exposed credentials by domain <br>
+[credentials - lookup by email](#action-credentials---lookup-by-email) - Look up exposed credentials by email address <br>
+[get cve intelligence](#action-get-cve-intelligence) - Get enriched CVE intelligence by CVE ID
 
 ## action: 'test connectivity'
 
@@ -51,23 +65,12 @@ Read only: **True**
 
 #### Action Parameters
 
-PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
---------- | -------- | ----------- | ---- | --------
-**Alert_Types** | optional | Comma-separated list of alert types to fetch (leave empty for all types) | string | |
-**Severities** | optional | Comma-separated severity levels to filter (leave empty for all severities) | string | |
-**Statuses** | optional | Comma-separated statuses to filter (leave empty for all statuses) | string | |
-**Include_CSV_Attachments** | optional | Include CSV attachments as JSON content in the response | boolean | |
-**Page_Size** | optional | Number of alerts to fetch per page (10-100) | numeric | |
+No parameters are required for this action
 
 #### Action Output
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.parameter.Alert_Types | string | | |
-action_result.parameter.Severities | string | | |
-action_result.parameter.Statuses | string | | |
-action_result.parameter.Include_CSV_Attachments | boolean | | |
-action_result.parameter.Page_Size | numeric | | |
 action_result.message | string | | |
 summary.total_objects | numeric | | |
 summary.total_objects_successful | numeric | | |
@@ -174,6 +177,195 @@ No parameters are required for this action
 #### Action Output
 
 No Output
+
+## action: 'ioc - get file reputation'
+
+Get the reputation of a file by its SHA256 hash
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**SHA256** | required | SHA256 hash of the file | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.SHA256 | string | | |
+action_result.data.\*.entity | string | | |
+action_result.data.\*.risk | string | | |
+action_result.data.\*.enrichment | string | | |
+action_result.data.\*.benign | boolean | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'ioc - get domain reputation'
+
+Get the reputation of a domain
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**Domain** | required | Domain name to look up | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.Domain | string | | |
+action_result.data.\*.entity | string | | |
+action_result.data.\*.risk | string | | |
+action_result.data.\*.enrichment | string | | |
+action_result.data.\*.benign | boolean | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'ioc - get ip reputation'
+
+Get the reputation of an IPv4 address
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**IP** | required | IPv4 address to look up | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.IP | string | | |
+action_result.data.\*.entity | string | | |
+action_result.data.\*.risk | string | | |
+action_result.data.\*.enrichment | string | | |
+action_result.data.\*.benign | boolean | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'ioc - get url reputation'
+
+Get the reputation of a URL
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**URL** | required | URL to look up | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.URL | string | | |
+action_result.data.\*.entity | string | | |
+action_result.data.\*.risk | string | | |
+action_result.data.\*.enrichment | string | | |
+action_result.data.\*.benign | boolean | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'credentials - lookup by domain'
+
+Look up exposed credentials by domain
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**Domain** | required | Domain to search for exposed credentials | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.Domain | string | | |
+action_result.data.\*.employee | string | | |
+action_result.data.\*.customer | string | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'credentials - lookup by email'
+
+Look up exposed credentials by email address
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**Email** | required | Comma-separated list of email addresses to search (max 50) | string | |
+**Mask_Password** | optional | Mask passwords in results | boolean | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.Email | string | | |
+action_result.parameter.Mask_Password | boolean | | |
+action_result.data.\*.raw_data | string | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
+
+## action: 'get cve intelligence'
+
+Get enriched CVE intelligence by CVE ID
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**CVE_ID** | required | CVE identifier (e.g. CVE-2024-1234) | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.parameter.CVE_ID | string | | |
+action_result.data.\*.id | string | | |
+action_result.data.\*.cve | string | | |
+action_result.data.\*.cyberint_score | numeric | | |
+action_result.data.\*.epss | string | | |
+action_result.data.\*.known_exploited_vulnerability | string | | |
+action_result.data.\*.threats | string | | |
+action_result.data.\*.tags | string | | |
+action_result.message | string | | |
+summary.total_objects | numeric | | |
+summary.total_objects_successful | numeric | | |
+action_result.status | string | | |
 
 ______________________________________________________________________
 

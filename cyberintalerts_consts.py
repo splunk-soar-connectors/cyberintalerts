@@ -20,6 +20,19 @@ ALERTS_STATUS_ENDPOINT = "/alert/api/v1/alerts/status"
 TAKEDOWN_SUBMIT_ENDPOINT = "/takedown/api/v1/submit"
 TAKEDOWN_REQUEST_ENDPOINT = "/takedown/api/v1/request"
 
+# IOC Endpoints
+IOC_FILE_SHA256_ENDPOINT = "/ioc/api/v1/file/sha256"
+IOC_DOMAIN_ENDPOINT = "/ioc/api/v1/domain"
+IOC_IPV4_ENDPOINT = "/ioc/api/v1/ipv4"
+IOC_URL_ENDPOINT = "/ioc/api/v1/url"
+
+# CVE Intel Endpoints
+CVE_GET_BY_ID_ENDPOINT = "/cve-intel/external/api/v1/vulnerability/{cve_id}"
+
+# Credentials Endpoints
+CREDENTIALS_BY_DOMAIN_ENDPOINT = "/exposed-credentials/by_domain/"
+CREDENTIALS_BY_EMAIL_ENDPOINT = "/exposed-credentials/by_email/"
+
 
 ClosureReason = Enum(
     "ClosureReason",
