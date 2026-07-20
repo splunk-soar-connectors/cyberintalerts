@@ -1,7 +1,7 @@
 # Cyberint Alerts
 
 Publisher: Check Point <br>
-Connector Version: 1.1.0 <br>
+Connector Version: 1.1.1 <br>
 Product Vendor: Check Point <br>
 Product Name: Cyberint Alerts <br>
 Minimum Product Version: 7.0.0
