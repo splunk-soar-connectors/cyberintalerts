@@ -41,6 +41,7 @@ from cyberintalerts_consts import (
     Status,
     TakedownReason,
 )
+from cyberintalerts_validation import normalize_cve_id
 
 
 class RetVal(tuple):
@@ -447,7 +448,10 @@ class CyberintAlertsConnector(BaseConnector):
 
     def _handle_get_cve_intelligence(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        cve_id = param["CVE_ID"]
+        cve_id = normalize_cve_id(param["CVE_ID"])
+        if cve_id is None:
+            return action_result.set_status(phantom.APP_ERROR, "CVE_ID must use the format CVE-YYYY-NNNN with at least four sequence digits")
+
         endpoint = CVE_GET_BY_ID_ENDPOINT.format(cve_id=cve_id)
         ret_val, response = self._make_rest_call(endpoint, action_result)
         if phantom.is_fail(ret_val):
