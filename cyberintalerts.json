@@ -39,6 +39,14 @@
             "order": 2,
             "name": "Company Name"
         },
+        "verify_server_cert": {
+            "description": "Verify the Cyberint API server certificate",
+            "data_type": "boolean",
+            "required": false,
+            "default": true,
+            "order": 10,
+            "name": "Verify Server Certificate"
+        },
         "fetch_severity": {
             "description": "Comma-separated list of severities to fetch. Supported values: low, medium, high, very_high. If empty, all severity levels will be returned",
             "data_type": "string",

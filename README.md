@@ -17,6 +17,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **base_url** | required | string | Cyberint API URL on which the services run (e.g. https://your-company.cyberint.io) |
 **access_token** | required | password | Cyberint API access token |
 **customer_name** | required | string | Company name associated with Cyberint instance |
+**verify_server_cert** | optional | boolean | Verify the Cyberint API server certificate |
 **fetch_severity** | optional | string | Comma-separated list of severities to fetch. Supported values: low, medium, high, very_high. If empty, all severity levels will be returned |
 **fetch_status** | optional | string | Comma-separated list of statuses to fetch. Supported values: open, acknowledged, closed. If empty, all statuses will be returned |
 **fetch_environment** | optional | string | Environments to fetch (comma separated). If empty, all available environments will be returned |
